@@ -83,3 +83,99 @@
 ### Difficult parts
 - The private key must never be committed, so the repository needs an example file rather than a real `.env`.
 - The deadline can be omitted, but then the deployment script must fall back to a future timestamp so the contract is always deployable.
+
+## Modification 5 - Deploy Script Fail-Fast Validation
+
+### What was changed
+- Added required env checks for `SEPOLIA_RPC_URL` and `PRIVATE_KEY`
+- Added strict private key format validation (`0x` + 64 hex chars)
+- Added strict deadline parsing and validation for `VOTING_DEADLINE`
+- Added a 5-minute minimum future buffer for custom deadlines
+- Logged deployer address and target network before deployment
+
+### Why this hardens deployment
+- It prevents accidental deployments with empty RPC URL or missing key.
+- It prevents malformed private keys from causing confusing runtime failures.
+- It avoids deploying elections that are already closed or almost closed.
+- It gives an explicit deploy trace (network + account) to reduce operator mistakes.
+
+### Difficult parts
+- `VOTING_DEADLINE` must be parsed as an integer timestamp in seconds; loose parsing can silently accept bad values.
+- A very short deadline might pass constructor checks but still be operationally unusable, which is why the extra 5-minute safety margin was added.
+
+## Modification 6 - Sepolia Network Config Hardening
+
+### What was changed
+- Added explicit Sepolia `chainId` (`11155111`) in Hardhat network config
+- Added private key normalization and strict key format checks in config
+- Added fail-fast checks that trigger when a command is run with `--network sepolia`
+- Added a network timeout value for Sepolia operations
+
+### Why this hardens deployment
+- Explicit chain ID reduces risk of accidental RPC misrouting.
+- Config-level validation catches bad secrets before transaction broadcasting.
+- Conditional fail-fast checks keep local compile/test workflows working while enforcing strictness for Sepolia commands.
+
+### Difficult parts
+- Throwing on missing env vars unconditionally would break local development, so checks are only strict when `--network sepolia` is used.
+- Validation now exists both in deploy script and config by design: config protects all Sepolia tasks, deploy script protects constructor/runtime assumptions.
+
+## Modification 7 - Verification and Post-Deploy Smoke Check
+
+### What was changed
+- Added Etherscan API key wiring in Hardhat config
+- Added `verify:sepolia` npm script and `scripts/verify.js`
+- Added `smoke:sepolia` npm script and `scripts/smokeCheck.js`
+- Extended `.env.example` with `ETHERSCAN_API_KEY` and `DEPLOYED_CONTRACT_ADDRESS`
+
+### Why this hardens deployment
+- Verification on Etherscan improves trust and demo clarity by making source code publicly auditable.
+- Smoke checks confirm that the deployed contract is reachable and constructor state is correct.
+- A scripted post-deploy check reduces risk of presenting the wrong contract address.
+
+### Difficult parts
+- Verification requires constructor arguments to match the original deployment exactly; mismatches fail verification.
+- Smoke checks must target the deployed contract address explicitly to avoid accidentally reading from a stale or local address.
+
+## Modification 8 - Checkable Sepolia Runbook
+
+### What was changed
+- Added a new step-by-step checklist guide file: `SEPOLIA_DEPLOYMENT_CHECKLIST.md`
+- Structured it with checkboxes from account/key setup to deploy, verify, smoke-check, and final go/no-go gate
+
+### Why this helps
+- It gives a clear execution path for real Sepolia operations under deadline pressure.
+- It reduces omissions by turning each deployment stage into a checkable gate.
+- It supports demo preparation by explicitly tracking the final artifacts required in README and screenshots.
+
+### Difficult parts
+- Verification depends on exact constructor argument replay, so the checklist emphasizes value consistency between deploy and verify.
+- Secret management is operationally critical, so the checklist includes explicit safety rules before any command execution.
+
+## Modification 9 - Etherscan V2 Compatibility Fix
+
+### What was changed
+- Updated Hardhat Etherscan config to use a single `apiKey` string instead of the deprecated per-network object format
+
+### Why this was needed
+- Sepolia verification failed against the deprecated V1 endpoint shape.
+- The current Etherscan integration expects the V2-compatible config format.
+
+### Difficult parts
+- The deployment itself was correct; only the verification wiring was outdated, so the fix had to be narrow to avoid disturbing the working Sepolia deployment flow.
+
+## Modification 10 - README Live Deployment Update and Proposal Seeding
+
+### What was changed
+- Updated the README with the live Sepolia contract address and Etherscan link
+- Added a `seed:sepolia` admin command and `scripts/seedProposals.js`
+- Added a one-time proposal seeding flow for the deployed contract
+
+### Why this helps
+- The README now contains the concrete live deployment information needed for delivery and demo prep.
+- The seed script gives the owner a repeatable way to create the initial proposals without manual Remix interaction.
+- The seed logic refuses to run when proposals already exist, which reduces accidental duplication on the live contract.
+
+### Difficult parts
+- Proposal creation must happen from the owner account, so the script relies on the same deployer-controlled environment used for Sepolia deployment.
+- Seeding a live contract is not naturally reversible, so the script aborts when proposal count is already non-zero.
