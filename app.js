@@ -106,7 +106,7 @@ async function loadProposals() {
 
   try {
     showLoadingSpinner(true);
-    const count = await contract.getProposalsCount();
+const count = await contract.proposalCount();
     const total = Number(count);
 
     if (total === 0) {
