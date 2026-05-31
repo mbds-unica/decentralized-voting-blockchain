@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const { saveDeployment } = require("./deploymentState");
 
 function assertEnv(name) {
   const value = process.env[name];
@@ -55,9 +56,27 @@ async function main() {
   const contract = await MonContrat.deploy(electionTitle, votingDeadline);
   await contract.waitForDeployment();
 
-  console.log("MonContrat deployed to:", await contract.getAddress());
+  const contractAddress = await contract.getAddress();
+  const deploymentTx = contract.deploymentTransaction();
+  const chainId = Number((await hre.ethers.provider.getNetwork()).chainId);
+
+  const deploymentData = {
+    network: hre.network.name,
+    chainId,
+    contractName: "MonContrat",
+    contractAddress,
+    electionTitle,
+    votingDeadline,
+    deployer: deployer.address,
+    deploymentTxHash: deploymentTx ? deploymentTx.hash : null,
+    deployedAt: new Date().toISOString()
+  };
+  const deploymentFile = saveDeployment(hre.network.name, deploymentData);
+
+  console.log("MonContrat deployed to:", contractAddress);
   console.log("Election title:", electionTitle);
   console.log("Voting deadline:", votingDeadline);
+  console.log("Deployment metadata:", deploymentFile);
 }
 
 main().catch((error) => {

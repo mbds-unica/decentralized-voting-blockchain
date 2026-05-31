@@ -10,7 +10,6 @@ contract MonContrat is Ownable {
         string title;
         string description;
         uint256 voteCount;
-        bool exists;
     }
 
     string public electionTitle;
@@ -38,14 +37,16 @@ contract MonContrat is Ownable {
         string calldata title,
         string calldata description
     ) external onlyOwner onlyWhileVotingOpen {
-        _proposals.push(Proposal({title: title, description: description, voteCount: 0, exists: true}));
+        require(bytes(title).length > 0, "Title cannot be empty");
+        require(bytes(description).length > 0, "Description cannot be empty");
+
+        _proposals.push(Proposal({title: title, description: description, voteCount: 0}));
         emit ProposalCreated(_proposals.length - 1, title, description);
     }
 
     function vote(uint256 proposalId) external onlyWhileVotingOpen {
         require(!hasVoted[msg.sender], "You already voted");
         require(proposalId < _proposals.length, "Invalid proposal");
-        require(_proposals[proposalId].exists, "Proposal does not exist");
 
         hasVoted[msg.sender] = true;
         votedProposalId[msg.sender] = proposalId;
