@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractName": "MonContrat",
+  "contractAddress": "0xB53D16534CD4d9F0B8361b3A7DF99beEf9508c05",
+  "electionTitle": "MBDS Election",
+  "votingDeadline": 1780247862,
+  "deployer": null,
+  "deploymentTxHash": null,
+  "deployedAt": null,
+  "syncedFromOnChainAt": null
+}
