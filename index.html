@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoteChain — Vote Décentralisé</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+ 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0f17;
+      --surface:   #111827;
+      --surface2:  #1a2335;
+      --border:    #1f2d42;
+      --accent:    #3b82f6;
+      --accent2:   #60a5fa;
+      --green:     #10b981;
+      --red:       #ef4444;
+      --amber:     #f59e0b;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --mono:      'Space Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+ 
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(59,130,246,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(16,185,129,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+ 
+    .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+
+ 
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 40px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
+    }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    #wallet-info {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--accent2);
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+      padding: 6px 12px;
+      border-radius: 6px;
+      display: none;
+    }
+
+ 
+    .btn {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #connect-btn {
+      padding: 10px 20px;
+      background: var(--accent);
+      color: #fff;
+    }
+    #connect-btn:hover:not(:disabled) { background: var(--accent2); }
+    #connect-btn.connected { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+
+    .btn-primary {
+      padding: 12px 24px;
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); }
+
+    .btn-vote {
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 8px 20px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent2);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.04em;
+    }
+    .btn-vote:hover:not(:disabled):not(.voted):not(.btn-disabled) {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-vote.voted {
+      border-color: var(--green);
+      color: var(--green);
+      cursor: default;
+    }
+    .btn-vote.btn-disabled {
+      border-color: var(--border);
+      color: var(--muted);
+      cursor: default;
+    }
+
+    .btn-spinner {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+ 
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .refresh-btn {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: color 0.15s;
+    }
+    .refresh-btn:hover { color: var(--accent2); }
+
+ 
+    .proposals-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .proposal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color 0.2s, transform 0.15s;
+      animation: fadeIn 0.3s ease both;
+    }
+    .proposal-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-1px); }
+    .proposal-card.open  { border-left: 3px solid var(--accent); }
+    .proposal-card.closed { border-left: 3px solid var(--border); opacity: 0.75; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .proposal-id {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .status-badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+    }
+    .badge-open   { background: rgba(16,185,129,0.1);  color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+    .badge-closed { background: rgba(100,116,139,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+    .proposal-description {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .vote-info { display: flex; align-items: baseline; gap: 6px; }
+    .vote-count {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent2);
+      transition: transform 0.2s;
+    }
+    .vote-count.bump { animation: bump 0.3s ease; }
+    @keyframes bump { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+    .vote-label { font-size: 0.8rem; color: var(--muted); }
+
+    .deadline-info { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
+
+    .card-footer { display: flex; justify-content: flex-end; }
+
+    .admin-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 48px;
+    }
+
+    .admin-title {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-title::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"],
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+
+ 
+    #loading-spinner {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 40px;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+    .spinner-lg {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    #empty-state {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 2rem; margin-bottom: 12px; }
+    .empty-text { font-size: 0.875rem; }
+
+ 
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      max-width: 360px;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-success { background: rgba(16,185,129,0.15);  border: 1px solid rgba(16,185,129,0.3);  color: var(--green); }
+    .toast-error   { background: rgba(239,68,68,0.15);   border: 1px solid rgba(239,68,68,0.3);   color: var(--red);   }
+    .toast-info    { background: rgba(59,130,246,0.15);  border: 1px solid rgba(59,130,246,0.3);  color: var(--accent2); }
+
+    .network-badge {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.2);
+      color: var(--amber);
+    }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .card-meta { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+ 
+    <header>
+      <div class="logo">
+        <span class="logo-dot"></span>
+        VoteChain
+      </div>
+      <div class="header-right">
+        <span class="network-badge">Sepolia</span>
+        <span id="wallet-info"></span>
+        <button class="btn" id="connect-btn" onclick="connectWallet()">
+          Connecter le wallet
+        </button>
+      </div>
+    </header>
+
+ 
+    <div class="admin-panel">
+      <div class="admin-title">Créer une proposition — Owner uniquement</div>
+      <div class="form-group">
+        <label for="proposal-description">Description</label>
+        <textarea
+          id="proposal-description"
+          placeholder="Ex : Adopter la nouvelle charte de gouvernance DAO…"
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label for="proposal-deadline">Date et heure de clôture</label>
+        <input type="datetime-local" id="proposal-deadline" />
+      </div>
+      <button class="btn btn-primary" id="create-btn" onclick="createProposal()">
+        Créer la proposition
+      </button>
+    </div>
+
+ 
+    <div class="section-header">
+      <span class="section-title">Propositions en cours</span>
+      <button class="refresh-btn" onclick="loadProposals()">↻ Actualiser</button>
+    </div>
+
+    <div id="loading-spinner">
+      <span class="spinner-lg"></span>
+      Chargement des propositions…
+    </div>
+
+    <div id="empty-state">
+      <div class="empty-icon">🗳️</div>
+      <div class="empty-text">Aucune proposition pour le moment.<br>Connecte ton wallet et crée la première.</div>
+    </div>
+
+    <div class="proposals-grid" id="proposals-list"></div>
+
+  </div>
+
+ 
+  <div class="toast" id="toast"></div>
+
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+ 
+  <script src="app.js"></script>
+</body>
+</html>
