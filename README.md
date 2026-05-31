@@ -36,6 +36,37 @@ npm run verify:sepolia
 npm run smoke:sepolia
 ```
 
+## Deterministic Deploy Verify Workflow
+
+To avoid constructor argument mismatches during verification, this project stores deployment metadata at deploy time.
+
+When you run `npm run deploy:sepolia`, the script writes a network file:
+
+- `deployments/sepolia.json`
+
+This file contains the source-of-truth values used for verification and smoke checks:
+
+- deployed contract address
+- election title
+- voting deadline
+- deployer address
+- deployment transaction hash
+- chain ID and timestamp
+
+Recommended command order:
+
+```bash
+npm run deploy:sepolia
+npm run verify:sepolia
+npm run smoke:sepolia
+```
+
+Notes:
+
+- `verify:sepolia` reads constructor arguments from `deployments/sepolia.json`.
+- `smoke:sepolia` also prefers `deployments/sepolia.json` when available.
+- If you set `DEPLOYED_CONTRACT_ADDRESS`, `ELECTION_TITLE`, or `VOTING_DEADLINE` in `.env`, they must match metadata values when metadata exists.
+
 ## Environment Variables
 
 Create a local `.env` file from `.env.example` and set:

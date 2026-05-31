@@ -17,6 +17,27 @@ describe("MonContrat", function () {
     return { contract, owner, voter, other, votingDeadline };
   }
 
+  async function deployEmptyFixture() {
+    const [owner, voter] = await ethers.getSigners();
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const votingDeadline = latestBlock.timestamp + 3600;
+
+    const MonContrat = await ethers.getContractFactory("MonContrat");
+    const contract = await MonContrat.deploy("MBDS Election", votingDeadline);
+    await contract.waitForDeployment();
+
+    return { contract, owner, voter, votingDeadline };
+  }
+
+  it("rejects constructor deadline in the past", async function () {
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const MonContrat = await ethers.getContractFactory("MonContrat");
+
+    await expect(
+      MonContrat.deploy("MBDS Election", latestBlock.timestamp)
+    ).to.be.revertedWith("Deadline must be in the future");
+  });
+
   it("lets the owner create proposals", async function () {
     const { contract } = await deployFixture();
 
@@ -34,6 +55,28 @@ describe("MonContrat", function () {
     await expect(
       contract.connect(voter).createProposal("Proposal C", "Unauthorized")
     ).to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount").withArgs(voter.address);
+  });
+
+  it("emits ProposalCreated when owner creates a proposal", async function () {
+    const { contract } = await deployEmptyFixture();
+
+    await expect(contract.createProposal("Proposal A", "First proposal"))
+      .to.emit(contract, "ProposalCreated")
+      .withArgs(0, "Proposal A", "First proposal");
+  });
+
+  it("rejects empty proposal title", async function () {
+    const { contract } = await deployEmptyFixture();
+
+    await expect(contract.createProposal("", "Description"))
+      .to.be.revertedWith("Title cannot be empty");
+  });
+
+  it("rejects empty proposal description", async function () {
+    const { contract } = await deployEmptyFixture();
+
+    await expect(contract.createProposal("Proposal", ""))
+      .to.be.revertedWith("Description cannot be empty");
   });
 
   it("allows one vote per address", async function () {
@@ -62,6 +105,12 @@ describe("MonContrat", function () {
     await expect(contract.connect(voter).vote(99)).to.be.revertedWith("Invalid proposal");
   });
 
+  it("rejects voting when no proposal exists", async function () {
+    const { contract, voter } = await deployEmptyFixture();
+
+    await expect(contract.connect(voter).vote(0)).to.be.revertedWith("Invalid proposal");
+  });
+
   it("closes voting after the deadline", async function () {
     const { contract, voter, votingDeadline } = await deployFixture();
 
@@ -70,5 +119,15 @@ describe("MonContrat", function () {
 
     await expect(contract.connect(voter).vote(0)).to.be.revertedWith("Voting is closed");
     expect(await contract.isVotingOpen()).to.equal(false);
+  });
+
+  it("rejects proposal creation after deadline", async function () {
+    const { contract, votingDeadline } = await deployEmptyFixture();
+
+    await ethers.provider.send("evm_setNextBlockTimestamp", [votingDeadline + 1]);
+    await ethers.provider.send("evm_mine");
+
+    await expect(contract.createProposal("Late Proposal", "Too late"))
+      .to.be.revertedWith("Voting is closed");
   });
 });

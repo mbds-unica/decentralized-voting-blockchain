@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const { loadDeployment, assertMatchingEnv } = require("./deploymentState");
 
 function assertEnv(name) {
   const value = process.env[name];
@@ -13,7 +14,17 @@ async function main() {
     throw new Error("Smoke check script is intended for Sepolia only");
   }
 
-  const contractAddress = assertEnv("DEPLOYED_CONTRACT_ADDRESS");
+  const deployment = loadDeployment(hre.network.name);
+  let contractAddress;
+
+  if (deployment) {
+    contractAddress = deployment.data.contractAddress;
+    assertMatchingEnv("DEPLOYED_CONTRACT_ADDRESS", contractAddress);
+    console.log("Using deployment metadata:", deployment.filePath);
+  } else {
+    contractAddress = assertEnv("DEPLOYED_CONTRACT_ADDRESS");
+  }
+
   const contract = await hre.ethers.getContractAt("MonContrat", contractAddress);
 
   const [title, deadline, count, isOpen] = await Promise.all([

@@ -1,40 +1,30 @@
 const hre = require("hardhat");
-
-function assertEnv(name) {
-  const value = process.env[name];
-  if (!value || value.trim() === "") {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value.trim();
-}
-
-function getVotingDeadline() {
-  const raw = process.env.VOTING_DEADLINE;
-  const now = Math.floor(Date.now() / 1000);
-
-  if (!raw || raw.trim() === "") {
-    return now + 7 * 24 * 60 * 60;
-  }
-
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed)) {
-    throw new Error("VOTING_DEADLINE must be a unix timestamp in seconds");
-  }
-
-  return parsed;
-}
+const { loadDeployment, assertMatchingEnv } = require("./deploymentState");
 
 async function main() {
   if (hre.network.name !== "sepolia") {
     throw new Error("Verification script is intended for Sepolia only");
   }
 
-  const contractAddress = assertEnv("DEPLOYED_CONTRACT_ADDRESS");
-  const electionTitle = process.env.ELECTION_TITLE || "Decentralized Vote";
-  const votingDeadline = getVotingDeadline();
+  const deployment = loadDeployment(hre.network.name);
+  if (!deployment) {
+    throw new Error(
+      "Missing deployment metadata. Run deploy first to create deployments/sepolia.json"
+    );
+  }
+
+  const { filePath, data } = deployment;
+  const contractAddress = data.contractAddress;
+  const electionTitle = data.electionTitle;
+  const votingDeadline = Number(data.votingDeadline);
+
+  assertMatchingEnv("DEPLOYED_CONTRACT_ADDRESS", contractAddress);
+  assertMatchingEnv("ELECTION_TITLE", electionTitle);
+  assertMatchingEnv("VOTING_DEADLINE", votingDeadline);
 
   console.log("Verifying contract:", contractAddress);
   console.log("Network:", hre.network.name);
+  console.log("Using deployment metadata:", filePath);
 
   await hre.run("verify:verify", {
     address: contractAddress,

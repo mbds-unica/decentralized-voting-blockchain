@@ -193,3 +193,25 @@
 
 ### Difficult parts
 - The handoff file needs to work in both plain browser usage and script-based tooling, so it exposes the config through `window` and `module.exports`.
+
+## Modification 12 - Deterministic Deployment Metadata, Contract Input Hardening, and Edge-Case Tests
+
+### What was changed
+- Added `scripts/deploymentState.js` to persist and load deployment metadata per network (`deployments/<network>.json`)
+- Updated `scripts/deploy.js` to save immutable deployment artifacts (address, constructor args, deployer, tx hash, chain ID, timestamp)
+- Updated `scripts/verify.js` to use frozen constructor args from deployment metadata instead of recomputing from environment defaults
+- Updated `scripts/smokeCheck.js` to consume deployment metadata when available, with mismatch checks against optional env overrides
+- Hardened `contracts/MonContrat.sol` by rejecting empty proposal title/description
+- Simplified `Proposal` storage by removing the redundant `exists` field
+- Extended `test/MonContrat.test.js` with edge cases and event assertions (past constructor deadline, no-proposal vote, proposal creation after deadline, empty input guards, `ProposalCreated` event)
+
+### Why this hardens Member 1 scope
+- Verification is now reproducible because constructor arguments are replayed from deployment-time values, not derived at runtime.
+- Post-deploy operations now point to a single source of truth, reducing operator errors and stale env mismatches.
+- Contract-level input validation blocks empty proposal data from entering permanent on-chain state.
+- Additional tests improve confidence for grading criteria tied to security and reliability.
+
+### Difficult parts
+- Etherscan verification fails if constructor args are even slightly different, so deploy-time metadata had to be treated as authoritative.
+- Backward compatibility was preserved in smoke checks by allowing env fallback only when metadata is unavailable.
+- Edge-case tests needed a separate empty-fixture deployment path to validate invalid votes and proposal event indexing cleanly.
