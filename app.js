@@ -135,13 +135,22 @@ const count = await contract.proposalCount();
 
 async function loadSingleProposal(id) {
   try {
-    const [description, voteCount, deadline, closed] = await contract.getProposal(id);
-    const deadlineTs = Number(deadline);
-    const now = Math.floor(Date.now() / 1000);
-    const isOpen = !closed && deadlineTs > now;
-    const voted = userAddress ? await contract.hasVoted(userAddress, id) : false;
+    const [title, description, voteCount, isOpen] = await contract.getProposal(id);
+const deadlineTs = Number(await contract.votingDeadline());
+let voted = false;
+if (userAddress) {
+  try {
+    const hasVotedVal = await contract.hasVoted(userAddress);
+    if (hasVotedVal) {
+      const votedProposalIdVal = await contract.votedProposalId(userAddress);
+      voted = votedProposalIdVal === id;
+    }
+  } catch {
+    voted = false;
+  }
+}
 
-    return buildProposalCard(id, description, Number(voteCount), deadlineTs, isOpen, voted);
+return buildProposalCard(id, title, description, Number(voteCount), deadlineTs, isOpen, voted);
   } catch {
     return null;
   }
@@ -249,7 +258,7 @@ function listenToContractEvents() {
 }
 
  
-function buildProposalCard(id, description, voteCount, deadlineTs, isOpen, voted) {
+function buildProposalCard(id, title, description, voteCount, deadlineTs, isOpen, voted) {
   const card = document.createElement("div");
   card.className = `proposal-card ${isOpen ? "open" : "closed"}`;
   card.setAttribute("data-proposal-id", id);
@@ -264,7 +273,7 @@ function buildProposalCard(id, description, voteCount, deadlineTs, isOpen, voted
         ${isOpen ? "● Ouvert" : "● Fermé"}
       </span>
     </div>
-    <p class="proposal-description">${escapeHtml(description)}</p>
+<p class="proposal-description">${escapeHtml(title)}: ${escapeHtml(description)}</p>
     <div class="card-meta">
       <div class="vote-info">
         <span class="vote-count" data-id="${id}">${voteCount}</span>
