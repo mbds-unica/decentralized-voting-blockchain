@@ -59,8 +59,8 @@ Validation notes:
 ## 4) Deploy to Sepolia
 
 - [ ] Run deployment: npm run deploy:sepolia
-- [ ] Copy the deployed contract address from terminal output.
-- [ ] Paste it into .env as DEPLOYED_CONTRACT_ADDRESS.
+- [ ] Confirm deployment metadata file was generated: deployments/sepolia.json
+- [ ] Copy the deployed contract address from terminal output (or from deployments/sepolia.json).
 - [ ] Save the transaction hash and explorer link.
 
 Expected output includes:
@@ -69,15 +69,30 @@ Expected output includes:
 - Target network name
 - Deployed contract address
 - Election title and deadline
+- Deployment metadata file path
+
+Metadata file should include:
+
+- contractAddress
+- electionTitle
+- votingDeadline
+- deployer
+- deploymentTxHash
+- chainId
 
 ## 5) Verify Contract on Etherscan
 
-- [ ] Confirm ELECTION_TITLE and VOTING_DEADLINE in .env are exactly the same values used during deployment.
 - [ ] Run verification: npm run verify:sepolia
 - [ ] Open Etherscan contract page and confirm source is verified.
 
+Verification behavior:
+
+- verify script reads constructor arguments from deployments/sepolia.json.
+- If DEPLOYED_CONTRACT_ADDRESS, ELECTION_TITLE, or VOTING_DEADLINE are set in .env, they must match metadata values.
+
 If verification fails:
 
+- [ ] Confirm deployments/sepolia.json exists and matches the intended deployment.
 - [ ] Re-check constructor arguments.
 - [ ] Re-check DEPLOYED_CONTRACT_ADDRESS.
 - [ ] Re-check ETHERSCAN_API_KEY.
@@ -86,6 +101,7 @@ If verification fails:
 ## 6) Run Post-Deploy Smoke Check
 
 - [ ] Run smoke check: npm run smoke:sepolia
+- [ ] Confirm smoke check is reading deployments/sepolia.json when available.
 - [ ] Confirm output shows correct network, address, title, deadline.
 - [ ] Confirm proposal count and voting status are returned without error.
 
