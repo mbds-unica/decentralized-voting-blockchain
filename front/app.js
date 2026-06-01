@@ -1,20 +1,27 @@
- 
- 
-const CONTRACT_ADDRESS = "0xB53D16534CD4d9F0B8361b3A7DF99beEf9508c05";
-const SEPOLIA_CHAIN_ID = "0xaa36a7";
- 
-const ABI = [
-  "function proposalCount() view returns (uint256)",
-  "function getProposal(uint256 proposalId) view returns (string title, string description, uint256 voteCount, bool isOpen)",
-  "function hasVoted(address voter) view returns (bool)",
-  "function votedProposalId(address voter) view returns (uint256)",
-  "function vote(uint256 proposalId) external",
-  "function createProposal(string title, string description) external",
-  "function isVotingOpen() view returns (bool)",
-  "function votingDeadline() view returns (uint256)",
-  "event Voted(address indexed voter, uint256 indexed proposalId)",
-  "event ProposalCreated(uint256 indexed proposalId, string title, string description)",
-];
+const CONFIG = (typeof window !== "undefined" && window.CONTRACT_CONFIG) ? window.CONTRACT_CONFIG : null;
+
+const CONTRACT_ADDRESS = CONFIG && CONFIG.contractAddress
+  ? CONFIG.contractAddress
+  : "0xB53D16534CD4d9F0B8361b3A7DF99beEf9508c05";
+
+const SEPOLIA_CHAIN_ID = CONFIG && CONFIG.network && CONFIG.network.hexChainId
+  ? CONFIG.network.hexChainId
+  : "0xaa36a7";
+
+const ABI = CONFIG && Array.isArray(CONFIG.abi)
+  ? CONFIG.abi
+  : [
+    "function proposalCount() view returns (uint256)",
+    "function getProposal(uint256 proposalId) view returns (string title, string description, uint256 voteCount, bool isOpen)",
+    "function hasVoted(address voter) view returns (bool)",
+    "function votedProposalId(address voter) view returns (uint256)",
+    "function vote(uint256 proposalId) external",
+    "function createProposal(string title, string description) external",
+    "function isVotingOpen() view returns (bool)",
+    "function votingDeadline() view returns (uint256)",
+    "event Voted(address indexed voter, uint256 indexed proposalId)",
+    "event ProposalCreated(uint256 indexed proposalId, string title, string description)",
+  ];
 
 let provider = null;
 let signer = null;

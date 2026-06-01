@@ -4,9 +4,10 @@ Decentralized voting dApp for the MIAGE MBDS M2 Blockchain mini-project.
 
 ## Live Sepolia Deployment
 
-- Contract address: `0xB53D16534CD4d9F0B8361b3A7DF99beEf9508c05`
-- Etherscan: https://sepolia.etherscan.io/address/0xB53D16534CD4d9F0B8361b3A7DF99beEf9508c05#code
+- Contract address: `0xaD49331ce757CE1AEAc4FD64Ea3255Ade28b6986`
+- Etherscan: https://sepolia.etherscan.io/address/0xaD49331ce757CE1AEAc4FD64Ea3255Ade28b6986#code
 - Election title: `MBDS Election`
+- Voting deadline: `1782788453` (2026-12-29T15:00:53Z)
 
 ## Features
 
@@ -34,6 +35,92 @@ npm test
 npm run deploy:sepolia
 npm run verify:sepolia
 npm run smoke:sepolia
+```
+
+## Run Frontend
+
+The frontend now reads the contract address from `.env` (`DEPLOYED_CONTRACT_ADDRESS`) through the generated `front/contractConfig.js`.
+
+Start the frontend server with:
+
+```bash
+npm run front
+```
+
+Then open:
+
+```text
+http://localhost:5500
+```
+
+Useful related command:
+
+```bash
+npm run sync:front-config
+```
+
+Use it if you only want to regenerate `front/contractConfig.js` from `.env` without starting the frontend server.
+
+## Sepolia Deployment Guide
+
+### 1) Configure environment
+
+Create `.env` from `.env.example` and set:
+
+- `SEPOLIA_RPC_URL`
+- `PRIVATE_KEY`
+- `ETHERSCAN_API_KEY`
+- `ELECTION_TITLE`
+- `VOTING_DEADLINE` (unix timestamp in seconds, at least +5 minutes in the future)
+- `DEPLOYED_CONTRACT_ADDRESS` (leave empty before first deployment)
+
+### 2) Install dependencies
+
+```bash
+npm install
+```
+
+### 3) Compile and test
+
+```bash
+npm run compile
+npm test
+```
+
+### 4) Deploy to Sepolia
+
+```bash
+npm run deploy:sepolia
+```
+
+After deployment, metadata is written to:
+
+- `deployments/sepolia.json`
+
+### 5) Verify on Etherscan
+
+```bash
+npm run verify:sepolia
+```
+
+### 6) Run smoke checks
+
+```bash
+npm run smoke:sepolia
+```
+
+### 7) Sync frontend with deployed address
+
+Set `DEPLOYED_CONTRACT_ADDRESS` in `.env` to the deployed contract address, then run:
+
+```bash
+npm run sync:front-config
+```
+
+Finally start the frontend:
+
+```bash
+npm run front
 ```
 
 ## Deterministic Deploy Verify Workflow
