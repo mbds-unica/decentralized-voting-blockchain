@@ -2,11 +2,10 @@
   "network": "sepolia",
   "chainId": 11155111,
   "contractName": "MonContrat",
-  "contractAddress": "0xB53D16534CD4d9F0B8361b3A7DF99beEf9508c05",
+  "contractAddress": "0xaD49331ce757CE1AEAc4FD64Ea3255Ade28b6986",
   "electionTitle": "MBDS Election",
-  "votingDeadline": 1780247862,
-  "deployer": null,
-  "deploymentTxHash": null,
-  "deployedAt": null,
-  "syncedFromOnChainAt": null
+  "votingDeadline": 1782788453,
+  "deployer": "0xA51666D76f0B7c4324582a71D988Ad962De82a84",
+  "deploymentTxHash": "0x33145fed26b1ac0b5fdf02c61a512461c0eccf3229d8ef8b0d58028a6a884a10",
+  "deployedAt": "2026-06-01T06:03:40.141Z"
 }

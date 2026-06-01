@@ -7,6 +7,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "sync:front-config": "node scripts/syncFrontConfig.js",
+    "front": "npm run sync:front-config && python3 -m http.server 5500 --directory front",
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "verify:sepolia": "hardhat run scripts/verify.js --network sepolia",
     "smoke:sepolia": "hardhat run scripts/smokeCheck.js --network sepolia",
